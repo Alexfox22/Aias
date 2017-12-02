@@ -16,9 +16,10 @@ struct node
 {
 	//vector<int> neighbour;
 	//vector<int> waight;
-	int *neighbour = new int[10];
-	int *waight = new int[10];
+	int *neighbour = new int[100];
+	int *waight = new int[100];
 	int top;
+	bool IsBlue;
 };
 struct minimum
 {
@@ -66,38 +67,38 @@ void getgraph(node *gr, int tops, int edges)
 }
 void getways(node *gr, int tops, int edges)
 {
-
 	for (int i = 0;i < tops;i++)
-	{
-
+	{	
 		cout << "top " << gr[i].top << "  ";
 		for (int j = 0;j < 10;j++)
-			cout << gr[i].neighbour[j] << ' ';
+		{
+			if (gr[i].neighbour[j] > 0)
+			{
+				cout << gr[i].neighbour[j] << ' ';
+			}
+		}
 		cout << endl;
-
 	}
-
 }
 void make_matrix_neigh(node *gr, int tops, int edges)
 {
 
 	for (int i = 0;i < tops;i++)
 	{
-		int k = 1;
+		
 		int j = 0;
-		while (k<tops+1)//for (int j = 0;j < tops;j++)
+		for (int k = 1;k < tops+1;k++)
 		{
 
 			if (gr[i].neighbour[j] != k)
 			{
 				cout << "0 ";
-				//cout << gr[i].neighbour[j]<<" "<< k<<"   ";
-				k++;
+				//cout << "fasas"<<gr[i].neighbour[j]<<" "<< k<<"   ";
+				
 			}
-			if (gr[i].neighbour[j] == k)
+			else /*(gr[i].neighbour[j] == k)*/
 			{
 				cout << "1 ";
-				k++;
 				j++;
 			}
 		}
@@ -122,48 +123,45 @@ void make_matrix_wei(node *gr, int tops, int edges,int **mas)
 	{
 		int k = 1;
 		int j = 0;
-		while (k<tops + 1)//for (int j = 0;j < tops;j++)
+		for (int k = 1;k < tops + 1;k++)
 		{
 
-			if ((gr[i].neighbour[j] != k)&&(k-1==i))
+			if (gr[i].neighbour[j] != k)
 			{
-				cout << "0 ";
-				mas[i][k-1] = 0;
-				//cout << gr[i].neighbour[j]<<" "<< k<<"   ";
-				k++;
-				continue;
-			}
-			if ((gr[i].neighbour[j] != k) && (k != i))
-			{
-				cout << "^ ";
-				mas[i][k-1] = 0;
-				//cout << gr[i].neighbour[j]<<" "<< k<<"   ";
-				k++;
-				continue;
+				if (k - 1 == i)
+				{
+					cout << "0 ";
+					mas[i][k - 1] = 0;
+					//cout << gr[i].neighbour[j]<<" "<< k<<"   ";
+				}
+				if (k-1 != i)
+				{
+					cout << "^ ";
+					mas[i][k - 1] = 0;
+					//cout << gr[i].neighbour[j]<<" "<< k<<"   ";
+					
+				}
 			}
 			if (gr[i].neighbour[j] == k)
 			{
-				cout << gr[i].waight[j]<< " ";
-				mas[i][k-1] = gr[i].waight[j];
-				k++;
+				cout << gr[i].waight[j] << " ";
+				mas[i][k - 1] = gr[i].waight[j];
+
 				j++;
-				continue;
 			}
+
 		}
 		cout << endl;
 	}
 
 }
-minimum findmin(int start,int tops, int *mas,int pos)
+minimum findmin(int start,int tops, int *mas,int pos,int minimal)
 {
-	
 	minimum min;
 	min.min = 9999;
-	int u = 0;
 	for(int k=start;k<tops;k++)
 	{
-		/*cout << i << " ";*/
-		if ((mas[k] < min.min) && (mas[k] > 0))
+		if ((mas[k] < min.min) && (mas[k] > 0)&&(mas[k]>minimal))
 		{
 			min.min = mas[k];
 			min.pos = k;
@@ -233,19 +231,19 @@ void readgraph(node *graph,string buf2,string num,string text,int tops,int edges
 	}
 
 }
-void make_podgr(node *mas, minimum *min,int tops)
-{
-	for (int i = 0;i < tops-1;i++)
-	{
-		mas[i].top = i+1;
-		
-		mas[i].neighbour[0] = min[i].pos + 1;
-		
-		mas[i].waight[0] = min[i].min;
-		
-	}
-
-}
+//void make_podgr(node *mas, minimum *min,int tops)
+//{
+//	for (int i = 0;i < tops-1;i++)
+//	{
+//		mas[i].top = i+1;
+//		
+//		mas[i].neighbour[0] = min[i].pos + 1;
+//		
+//		mas[i].waight[0] = min[i].min;
+//		
+//	}
+//
+//}
 int main()
 {
 	int tops = 0;
@@ -255,6 +253,7 @@ int main()
 	string buf1,buf2;
 	string num;
 	int pos = 0;
+	minimum min;
 	
 	cout << "Read from file? (1-yep/0-no) ";
 	cin >> menu;
@@ -282,9 +281,11 @@ int main()
 	int **mas = new int*[tops];
 	node *resPrim = new node[tops];
 	minimum *masmin = new minimum[tops];
+
 	for (int i = 0;i < tops;i++)
 	{
 		mas[i] = new int[tops];
+		masmin[i].min = 0;
 	}
 	if (menu == 1)
 	{
@@ -299,20 +300,69 @@ int main()
 		node *graph = new node[tops];
 		putgraph(graph, tops, edges);
 	}
+	for (int i = 0;i < tops;i++)
+		graph[i].IsBlue = false;
 	make_matrix_neigh(graph, tops, edges);
 	cout << endl;
 	cout << endl;
 	make_matrix_wei(graph, tops, edges,mas);
 	cout << endl;
 	getgraph(graph, tops, edges);
-	minimum min;
+	bool minfound=false;
 	cout << endl;
 	outp(mas, tops);
-	for (int j=0;j<tops-1;j++)
-	masmin[j] = findmin(j, tops, mas[j], pos);	
-	for (int i = 0;i < tops-1;i++)
+	bool *str = new bool[tops];
+	for (int i = 0;i < tops;i++)
+		str[i] = false;
+	//masmin[0] = findmin(0, tops, mas[0], pos,);	
+	str[0] = true;
+	int k = 0;
+	while (k < tops - 1)
+	{
+		for (int i = 0;i < tops - 1;i++)
+		{
+			if (str[i] == true)
+			{
+				int MIN = 9999;
+				cout << "  str[" << i << "] == true  ";
+				//cout << findmin(i, tops, mas[i], pos).pos << "        ";
+				//if (graph[findmin(i, tops, mas[i], pos).pos].IsBlue == true)
+				//{
+				if (findmin(i, tops, mas[i], pos, masmin[i].min).min < 9999) minfound = true;
+				if ((minfound == true))
+				{
+					/*if (((graph[findmin(i, tops, mas[i], pos, masmin[i].min).pos].IsBlue != true) && (graph[i].IsBlue == true)) ||
+						(graph[findmin(i, tops, mas[i], pos, masmin[i].min).pos].IsBlue == true) && (graph[i].IsBlue != true))
+						cout << " Proshlo";*/
+						cout << "truemin  ";
+						masmin[i] = findmin(i, tops, mas[i], pos, masmin[i].min);
+						cout << "masmin[" << i << "].min" << masmin[i].min << "  ";
+
+						cout << masmin[i].pos << " <------ " << masmin[i].min << "   ";
+						if (graph[masmin[i].pos].IsBlue == false)
+						{
+							graph[masmin[i].pos].IsBlue = true;
+							cout << "  top " << masmin[i].pos << "added to blue tops ";
+
+						}
+						if (str[masmin[i].pos] == false)
+						{
+							str[masmin[i].pos] = true;
+							cout << "  str[" << masmin[i].pos << "] = true  ";
+
+						}
+						k++;
+						minfound = false;
+						cout << endl;
+						//break;
+					
+				}
+			}
+		}
+	}
+	for (int i = 0;i < tops;i++)
 	cout << masmin[i].min << " " << masmin[i].pos << endl;
-	make_podgr(resPrim, masmin, tops);
+	//make_podgr(resPrim, masmin, tops);
 	for (int i = 0;i < tops-1;i++)
 	{
 		cout << resPrim[i].top << endl;

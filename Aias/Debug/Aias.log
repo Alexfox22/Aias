@@ -1,5 +1,5 @@
 ﻿  Source.cpp
-c:\users\nika-\documents\visual studio 2015\projects\aias\aias\source.cpp(191): warning C4018: <: несоответствие типов со знаком и без знака
-c:\users\nika-\documents\visual studio 2015\projects\aias\aias\source.cpp(214): warning C4018: <: несоответствие типов со знаком и без знака
-c:\users\nika-\documents\visual studio 2015\projects\aias\aias\source.cpp(308): warning C4101: min: неиспользованная локальная переменная
+c:\users\nika-\documents\visual studio 2015\projects\aias\aias\source.cpp(189): warning C4018: <: несоответствие типов со знаком и без знака
+c:\users\nika-\documents\visual studio 2015\projects\aias\aias\source.cpp(212): warning C4018: <: несоответствие типов со знаком и без знака
+c:\users\nika-\documents\visual studio 2015\projects\aias\aias\source.cpp(256): warning C4101: min: неиспользованная локальная переменная
   Aias.vcxproj -> c:\users\nika-\documents\visual studio 2015\Projects\Aias\Debug\Aias.exe
