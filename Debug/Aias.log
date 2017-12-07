@@ -1,6 +1,0 @@
-﻿  Source.cpp
-c:\users\nika-\documents\visual studio 2015\projects\aias\aias\source.cpp(190): warning C4018: <: несоответствие типов со знаком и без знака
-c:\users\nika-\documents\visual studio 2015\projects\aias\aias\source.cpp(213): warning C4018: <: несоответствие типов со знаком и без знака
-c:\users\nika-\documents\visual studio 2015\projects\aias\aias\source.cpp(404): warning C4553: ==: оператор не имеет результата; возможно, имелся в виду "="
-c:\users\nika-\documents\visual studio 2015\projects\aias\aias\source.cpp(272): warning C4101: min: неиспользованная локальная переменная
-  Aias.vcxproj -> C:\Users\nika-\Documents\Visual Studio 2015\Projects\Aias\Debug\Aias.exe

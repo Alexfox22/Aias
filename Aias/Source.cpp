@@ -25,6 +25,7 @@ struct minimum
 {
 	int min;
 	int pos;
+	int str;
 };
 void putgraph(node *gr,int tops,int edges)
 {
@@ -93,7 +94,7 @@ void make_matrix_neigh(node *gr, int tops, int edges)
 			if (gr[i].neighbour[j] != k)
 			{
 				cout << "0 ";
-				//cout << "fasas"<<gr[i].neighbour[j]<<" "<< k<<"   ";
+			//	cout << "fasas"<<gr[i].neighbour[j]<<" "<< k<<"   ";
 				
 			}
 			else /*(gr[i].neighbour[j] == k)*/
@@ -110,8 +111,13 @@ void outp(int **mas,int tops)
 {
 	for (int j = 0;j < tops;j++)
 	{
-		for (int i = j;i < tops;i++)
-			cout << mas[j][i] << " ";
+		for (int i = 0;i < tops;i++)
+		{
+			cout << mas[j][i];
+			if ((mas[i][j]-10)>0)
+				cout<< " ";
+			else cout << "  ";
+		}
 		cout << endl;
 	}
 	cout << endl;
@@ -131,20 +137,20 @@ void make_matrix_wei(node *gr, int tops, int edges,int **mas)
 				if (k - 1 == i)
 				{
 					cout << "0 ";
-					mas[i][k - 1] = 0;
+					mas[i][k - 1] = INT_MAX-1;
 					//cout << gr[i].neighbour[j]<<" "<< k<<"   ";
 				}
 				if (k-1 != i)
 				{
 					cout << "^ ";
-					mas[i][k - 1] = 0;
+					mas[i][k - 1] =INT_MAX-1;
 					//cout << gr[i].neighbour[j]<<" "<< k<<"   ";
 					
 				}
 			}
 			if (gr[i].neighbour[j] == k)
 			{
-				cout << gr[i].waight[j] << " ";
+				cout << gr[i].waight[j] << " |";
 				mas[i][k - 1] = gr[i].waight[j];
 
 				j++;
@@ -155,13 +161,13 @@ void make_matrix_wei(node *gr, int tops, int edges,int **mas)
 	}
 
 }
-minimum findmin(int start,int tops, int *mas,int pos,int minimal)
+minimum findmin(int start,int tops, int *mas,int pos)
 {
 	minimum min;
-	min.min = 9999;
-	for(int k=start;k<tops;k++)
+	min.min = INT_MAX;
+	for(int k=0;k<tops;k++)
 	{
-		if ((mas[k] < min.min) && (mas[k] > 0)&&(mas[k]>minimal))
+		if ((mas[k]>start)&&(mas[k] < min.min) && (mas[k] > 0))
 		{
 			min.min = mas[k];
 			min.pos = k;
@@ -173,7 +179,7 @@ minimum findmin(int start,int tops, int *mas,int pos,int minimal)
 void readgraph(node *graph,string buf2,string num,string text,int tops,int edges)
 {
 	ifstream imfile;
-	imfile.open("input.txt");
+	imfile.open("input1.txt");
 	cout << tops << endl;
 	getline(imfile, buf2);
 	getline(imfile, buf2);
@@ -231,6 +237,21 @@ void readgraph(node *graph,string buf2,string num,string text,int tops,int edges
 	}
 
 }
+int insertsortpos(int *mas, int len, int key)
+{
+	if (mas[0] == 0)
+		return 0;
+	int k = 1;
+	while (mas[k] < key) k++;
+	for (int i = key;i < len;i++)
+	{
+		int buf;
+		buf = mas[i];
+		mas[i] = key;
+		mas[i + 1] = buf;
+	}
+	return k;
+}
 //void make_podgr(node *mas, minimum *min,int tops)
 //{
 //	for (int i = 0;i < tops-1;i++)
@@ -248,7 +269,7 @@ int main()
 {
 	int tops = 0;
 	int edges = 0;
-	int menu = -9;
+	int menu = INT_MIN;
 	string text;
 	string buf1,buf2;
 	string num;
@@ -267,7 +288,7 @@ int main()
 	if (menu == 1)
 	{
 		ifstream imfile;
-		imfile.open("input.txt");
+		imfile.open("input1.txt");
 		getline(imfile, buf1);
 		tops = stoi(buf1);
 	}
@@ -279,9 +300,8 @@ int main()
 	}
 	node *graph = new node[tops];
 	int **mas = new int*[tops];
-	node *resPrim = new node[tops];
+	node *resPrim = new node[tops];			//результат для Прима
 	minimum *masmin = new minimum[tops];
-
 	for (int i = 0;i < tops;i++)
 	{
 		mas[i] = new int[tops];
@@ -291,7 +311,6 @@ int main()
 	{
 	readgraph(graph, buf2, num, text, tops, edges);
 	}
-
 	else
 	{
 		cout << "input count of edges ";
@@ -311,62 +330,115 @@ int main()
 	bool minfound=false;
 	cout << endl;
 	outp(mas, tops);
-	bool *str = new bool[tops];
+	bool *str = new bool[tops];				//СТРОКИ, КОТОРЫЕ ВКЛЮЧЕНЫ В ПОИСК МИНИМУМА
 	for (int i = 0;i < tops;i++)
 		str[i] = false;
-	//masmin[0] = findmin(0, tops, mas[0], pos,);	
-	str[0] = true;
+	bool *strcycle = new bool[tops];			//ИЗМЕНЯЕТСЯ ВНУТРИ ЦИКЛА
+	for (int i = 0;i < tops;i++)
+		strcycle[i] = false;
+	int isfullstr = 0;
+	
+	
+	str[0] = true;			//первую строку открыли для поиска
+	strcycle[0] = true;
+	graph[0].IsBlue = true;
 	int k = 0;
-	while (k < tops - 1)
+	int *massivekoef = new int[tops];
+	for (int i = 0;i < tops;i++)
+		massivekoef[i] = -1;
+
+
+	while (k < tops - 1)			//идём по вершинам
 	{
-		for (int i = 0;i < tops - 1;i++)
+		minimum minimus;
+		minimus.min = INT_MAX;
+		for (int i = 0;i < tops ;i++)
 		{
-			if (str[i] == true)
+		
+			if (str[i] == true)			//идём по открытым вершинам
 			{
-				int MIN = 9999;
-				cout << "  str[" << i << "] == true  ";
-				//cout << findmin(i, tops, mas[i], pos).pos << "        ";
-				//if (graph[findmin(i, tops, mas[i], pos).pos].IsBlue == true)
-				//{
-				if (findmin(i, tops, mas[i], pos, masmin[i].min).min < 9999) minfound = true;
+				int popo = 0;
+				int kr;
+				while ((graph[findmin(popo, tops, mas[i], pos).pos].IsBlue == true) && (graph[i].IsBlue == true))
+				{
+					//cout << findmin(popo, tops, mas[i], pos).min<< "  BAD REBRO " << i + 1 << "," << findmin(popo, tops, mas[i], pos).pos + 1 << "  " << graph[findmin(popo, tops, mas[i], pos).pos].IsBlue << " " << graph[i].IsBlue << endl;
+					kr = findmin(popo, tops, mas[i], pos).min;
+					//cout << "kr " << kr << endl;
+					popo = kr;
+					if (popo == INT_MAX-1) break;
+				}
+				if (findmin(popo, tops, mas[i], pos).min < INT_MAX)
+					minfound = true;		//если минимум остался
 				if ((minfound == true))
 				{
-					/*if (((graph[findmin(i, tops, mas[i], pos, masmin[i].min).pos].IsBlue != true) && (graph[i].IsBlue == true)) ||
-						(graph[findmin(i, tops, mas[i], pos, masmin[i].min).pos].IsBlue == true) && (graph[i].IsBlue != true))
-						cout << " Proshlo";*/
-						cout << "truemin  ";
-						masmin[i] = findmin(i, tops, mas[i], pos, masmin[i].min);
-						cout << "masmin[" << i << "].min" << masmin[i].min << "  ";
-
-						cout << masmin[i].pos << " <------ " << masmin[i].min << "   ";
-						if (graph[masmin[i].pos].IsBlue == false)
-						{
-							graph[masmin[i].pos].IsBlue = true;
-							cout << "  top " << masmin[i].pos << "added to blue tops ";
-
-						}
-						if (str[masmin[i].pos] == false)
-						{
-							str[masmin[i].pos] = true;
-							cout << "  str[" << masmin[i].pos << "] = true  ";
-
-						}
-						k++;
-						minfound = false;
-						cout << endl;
-						//break;
+					//cout << "  str[" << i << "] == true  ";
+					//cout << "truemin  ";
+				
+					masmin[i] = findmin(popo, tops, mas[i], pos);
+					//cout << "masmin[" << i << "].min" << masmin[i].min << "  ";
 					
+					cout << masmin[i].pos << " <------ " << masmin[i].min << "   ";
+					//cout << "REBRO " <<i+1<<","<< masmin[i].pos+1 <<"  "<< graph[masmin[i].pos].IsBlue<<" " << graph[i].IsBlue << endl;
+					if ((masmin[i].min < minimus.min)&&(((graph[masmin[i].pos].IsBlue == false)&& (graph[i].IsBlue == true))|| ((graph[masmin[i].pos].IsBlue == true) && (graph[i].IsBlue == false))))//запоминаем минимальный по открытым строкам
+					{
+						//cout << " ___entered___" << graph[masmin[i].pos].IsBlue << endl;
+						minimus.min = masmin[i].min;
+						minimus.pos = masmin[i].pos;
+						minimus.str = i;	
+					}
+					
+					minfound = false;
+
+						
+						cout << endl;
 				}
 			}
 		}
+		if (graph[minimus.pos].IsBlue == false)
+		{
+			graph[minimus.pos].IsBlue = true;
+			cout << "  top " << minimus.pos+1 << " added to blue tops "<<endl;
+		}
+		if (strcycle[minimus.pos] == false)
+		{
+			strcycle[minimus.pos] = true;
+			isfullstr++;
+		}
+		if (isfullstr + 1 == tops)
+			for (int u = 0;u < tops ;u++)
+				if (strcycle[u] == false) strcycle[u] == true;
+		cout << "MINIMUS---->" << minimus.min <<" POS---->"<< minimus.pos<< " STR---->" << minimus.str << endl;
+		massivekoef[minimus.str]++;
+		resPrim[minimus.str].neighbour[massivekoef[minimus.str]]=minimus.pos+1;
+		resPrim[minimus.str].waight[massivekoef[minimus.str]] = minimus.min;
+		resPrim[minimus.str].top = minimus.str+1;
+
+		k++;
+		mas[minimus.str][minimus.pos] = INT_MAX;
+		mas[minimus.pos][minimus.str] = INT_MAX;
+		//outp(mas, tops);
+		for (int i = 0;i < tops;i++)
+			str[i] = strcycle[i];
 	}
-	for (int i = 0;i < tops;i++)
-	cout << masmin[i].min << " " << masmin[i].pos << endl;
-	//make_podgr(resPrim, masmin, tops);
-	for (int i = 0;i < tops-1;i++)
+	for (int i = 0;i < tops-1;i++)		//вывод
 	{
+		int f = 0;
+		if (resPrim[i].top>0)
 		cout << resPrim[i].top << endl;
-		cout << resPrim[i].neighbour[0] << " ";
-		cout << resPrim[i].waight[0] << endl << endl;;
-	}
+		while (resPrim[i].neighbour[f] > 0)
+		{
+			cout << resPrim[i].neighbour[f] << "  ";
+			
+			f++;
+		}
+		cout << endl;
+		int fu = 0;
+		while (resPrim[i].waight[fu] > 0)
+		{
+			cout << resPrim[i].waight[fu]<<"  " ;
+			fu++;
+		}
+		cout << endl;
+		cout << endl;
+	}   
 }
